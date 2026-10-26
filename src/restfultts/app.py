@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from mcp.server.transport_security import TransportSecuritySettings
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.routing import Route
 
 from . import __version__, api, ui
@@ -54,7 +55,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     mcp_app = mcp.streamable_http_app(
         stateless_http=True,
         json_response=True,
-        # the service is meant to be reached by other hosts; protect it with RESTFULTTS_API_TOKEN instead
+        # the TrustedHostMiddleware below checks the Host header of every route, /mcp included
         transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
     )
     mcp_endpoint = next(r for r in mcp_app.routes if isinstance(r, Route)).app
@@ -82,6 +83,8 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(ui.router)
     app.router.routes.append(Route("/mcp", endpoint=BearerGuard(mcp_endpoint, auth), methods=["GET", "POST", "DELETE"]))
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+    # against DNS rebinding: a web page must not reach a server on the visitor's loopback under its own host name
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
     ui.templates.env.globals["max_text_chars"] = settings.max_text_chars
 
     @app.exception_handler(LoginRequired)

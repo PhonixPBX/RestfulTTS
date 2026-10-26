@@ -93,3 +93,21 @@ def test_delete_audio_removes_all_formats(client, settings, engine):
 
 def test_delete_requires_auth(secured):
     assert secured.delete("/api/v1/audio/" + "0" * 64).status_code == 401
+
+
+def test_unknown_host_is_rejected(client):
+    # DNS rebinding: a page on evil.example resolving to the server's address
+    assert client.get("/api/v1/health", headers={"Host": "evil.example"}).status_code == 400
+    assert client.post("/mcp", json={}, headers={"Host": "evil.example"}).status_code == 400
+    assert client.get("/api/v1/health").status_code == 200
+
+
+def test_trusted_hosts_defaults():
+    from restfultts.config import Settings
+
+    assert Settings(host="127.0.0.1").trusted_hosts == ["localhost", "127.0.0.1"]
+    assert Settings(host="0.0.0.0").trusted_hosts == ["*"]
+    assert Settings(host="0.0.0.0", allowed_hosts="tts.example.org, *.pbx.lan").trusted_hosts == [
+        "tts.example.org",
+        "*.pbx.lan",
+    ]

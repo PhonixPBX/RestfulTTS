@@ -15,7 +15,7 @@ def engine() -> FakeEngine:
 
 @pytest.fixture
 def settings(tmp_path) -> Settings:
-    return Settings(data_dir=tmp_path, api_token="", max_text_chars=200, cache_max_mb=50)
+    return Settings(data_dir=tmp_path, api_token="", max_text_chars=200, cache_max_mb=50, allowed_hosts="testserver")
 
 
 @pytest.fixture

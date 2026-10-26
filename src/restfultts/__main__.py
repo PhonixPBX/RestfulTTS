@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -13,12 +14,18 @@ from .voices import LANGUAGES
 def _serve(args: argparse.Namespace) -> int:
     import uvicorn
 
+    # create_app reads the listen address too (trusted hosts), also in the --reload worker process
+    if args.host:
+        os.environ["RESTFULTTS_HOST"] = args.host
+    if args.port:
+        os.environ["RESTFULTTS_PORT"] = str(args.port)
+    get_settings.cache_clear()
     settings = get_settings()
     uvicorn.run(
         "restfultts.app:create_app",
         factory=True,
-        host=args.host or settings.host,
-        port=args.port or settings.port,
+        host=settings.host,
+        port=settings.port,
         reload=args.reload,
         proxy_headers=True,
         forwarded_allow_ips="*" if args.behind_proxy else None,

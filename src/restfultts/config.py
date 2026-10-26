@@ -23,6 +23,17 @@ class Settings(BaseSettings):
     cache_max_mb: Annotated[int, Field(ge=0)] = 1024
     host: str = "127.0.0.1"
     port: int = 8000
+    # Comma separated Host header names the server answers to ("*" = any, "*.example.org" = subdomains).
+    # Empty: localhost/127.0.0.1 when listening on loopback, otherwise any.
+    allowed_hosts: str = ""
+
+    @property
+    def trusted_hosts(self) -> list[str]:
+        if self.allowed_hosts.strip():
+            return [h.strip() for h in self.allowed_hosts.split(",") if h.strip()]
+        if self.host in ("127.0.0.1", "localhost", "::1"):
+            return ["localhost", "127.0.0.1"]
+        return ["*"]
 
     @property
     def cache_dir(self) -> Path:

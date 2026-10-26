@@ -57,6 +57,7 @@ Environment variables (or an `.env` file):
 | `RESTFULTTS_MAX_TEXT_CHARS` | `5000` | Longer texts are rejected with 413. |
 | `RESTFULTTS_CACHE_MAX_MB` | `1024` | Size limit of the audio cache; the least recently used files are removed first. |
 | `RESTFULTTS_HOST` / `RESTFULTTS_PORT` | `127.0.0.1` / `8000` | Listen address (`0.0.0.0` in the container). |
+| `RESTFULTTS_ALLOWED_HOSTS` | empty | Comma separated host names the server answers to, e.g. `tts.example.org,*.pbx.lan`; `*` allows any. Other `Host` headers get 400, which protects against DNS rebinding. When empty, only `localhost` and `127.0.0.1` are allowed while listening on loopback, and any host otherwise. |
 
 ## REST API
 
