@@ -1,6 +1,6 @@
 [project]
 name = "restfultts"
-version = "0.1.0"
+version = "0.2.0.dev0"
 description = "Kokoro text-to-speech over REST, MCP and a web UI for PhonixPBX"
 readme = "README.md"
 license = "Apache-2.0"

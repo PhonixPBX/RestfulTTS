@@ -4,6 +4,8 @@ All notable changes to RestfulTTS are documented in this file. The format follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
 ## [0.1.0] - 2026-10-26
 
 ### Added
