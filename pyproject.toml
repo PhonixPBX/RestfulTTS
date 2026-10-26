@@ -1,0 +1,71 @@
+[project]
+name = "restfultts"
+version = "0.1.0.dev0"
+description = "Kokoro text-to-speech over REST, MCP and a web UI for PhonixPBX"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Rene Moser", email = "mail@renemoser.net" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3.1",
+    "pydantic-settings>=2.6",
+    "python-multipart>=0.0.18",
+    "mcp>=1.9",
+    "numpy>=1.26",
+    "soundfile>=0.12",
+    "soxr>=0.5",
+    "torch>=2.5",
+    "kokoro",
+    "misaki[en,de]",
+    "en-core-web-sm",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[project.scripts]
+restfultts = "restfultts.__main__:main"
+
+[tool.uv.sources]
+# German G2P (misaki.de) only exists in these forks, see https://huggingface.co/Thorsten-Voice/Kokoro
+kokoro = { git = "https://github.com/semidark/kokoro.git", rev = "b96fef95e6a746495f92443fac7c688f90fc57fc" }
+misaki = { git = "https://github.com/semidark/misaki.git", rev = "6d252a2e02f3b030f22f56686f1a73786c16ffc8" }
+torch = { index = "pytorch-cpu" }
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["models: synthesizes with the real Kokoro models (slow, downloads weights)"]
+addopts = "-m 'not models'"
+asyncio_mode = "auto"

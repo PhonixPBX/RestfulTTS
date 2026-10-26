@@ -1,0 +1,20 @@
+RestfulTTS
+Copyright 2026 The PhonixPBX contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE), except for the
+following parts which keep their own licenses:
+
+- src/restfultts/static/vendor/   Tabler and Tabler Icons (MIT), htmx (0BSD); see vendor/VERSIONS
+
+Downloaded at runtime and not part of this repository:
+
+- hexgrad/Kokoro-82M              model weights and voicepacks, Apache-2.0
+- Thorsten-Voice/Kokoro           German fine-tune of Kokoro-82M, Apache-2.0;
+                                  trained on the Thorsten-Voice dataset (CC0)
+
+Python dependencies with copyleft licenses, used as unmodified libraries:
+
+- espeak-ng (GPL-3.0-or-later), shipped as a shared library by the espeakng-loader
+  wheel and loaded by misaki/phonemizer for grapheme-to-phoneme conversion
+  (German, French, Italian and the English fallback)
+- phonemizer-fork (GPL-3.0)
