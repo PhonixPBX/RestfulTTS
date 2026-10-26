@@ -67,7 +67,7 @@ jobs:
       final: ${{ steps.kind.outputs.final }}
       image: ${{ steps.image.outputs.name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Tag matches the version
         if: startsWith(github.ref, 'refs/tags/v')
@@ -161,7 +161,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Release notes
         env:
           IMAGE: ${{ needs.image.outputs.image }}
