@@ -177,7 +177,7 @@ jobs:
             echo '```'
           } > "$RUNNER_TEMP/notes.md"
       # v1.2.0 is a final release; v1.2.0rc1 and other PEP 440 suffixes are pre-releases, never "latest"
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: RestfulTTS ${{ needs.image.outputs.version }}
           body_path: ${{ runner.temp }}/notes.md
