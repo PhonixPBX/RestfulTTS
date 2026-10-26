@@ -1,0 +1,75 @@
+name: dependabot-automerge
+
+# Squash-merges Dependabot PRs whose updates are all semver patches, once every check on the PR head
+# has passed. Runs after each ci/container run, so whichever finishes last does the merge. The repository
+# has no branch protection (private, free plan), hence no native auto-merge; the PR code is never checked out.
+on:
+  workflow_run:
+    workflows: [ci, container]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.workflow_run.head_sha }}
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.actor.login == 'dependabot[bot]'
+      && startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - name: Find the pull request
+        id: pr
+        run: |
+          pr=$(gh pr list --state open --head "$BRANCH" --json number,author,headRefOid \
+            -q ".[] | select(.headRefOid == \"$SHA\" and .author.login == \"app/dependabot\") | .number")
+          if [ -z "$pr" ]; then
+            echo "::notice::no open Dependabot PR for $BRANCH at $SHA (closed or updated since)"
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Only semver patch updates
+        id: kind
+        if: steps.pr.outputs.number != ''
+        run: |
+          # Dependabot writes its metadata into the commit message, one update-type per dependency
+          gh api "repos/$GH_REPO/commits/$SHA" -q .commit.message > message.txt
+          types=$(sed -n 's/^ *update-type: *//p' message.txt | sort -u)
+          echo "update types: ${types:-none}"
+          patch=false
+          [ "$types" = "version-update:semver-patch" ] && patch=true
+          [ "$patch" = true ] || echo "::notice::not a patch-only update, left for review"
+          echo "patch=$patch" >> "$GITHUB_OUTPUT"
+
+      - name: All checks passed
+        id: checks
+        if: steps.kind.outputs.patch == 'true'
+        run: |
+          # every check run on the head commit: none pending, none failed (skipped/neutral are fine);
+          # this job's own check run is still in progress, so it is left out
+          gh api --paginate "repos/$GH_REPO/commits/$SHA/check-runs?per_page=100" \
+            -q '.check_runs[] | select(.name != "merge") | "\(.status) \(.conclusion) \(.name)"' > runs.txt
+          cat runs.txt
+          ok=true
+          grep -qv '^completed ' runs.txt && ok=false
+          grep -Ev '^completed (success|skipped|neutral) ' runs.txt | grep -q . && ok=false
+          [ "$ok" = true ] || echo "::notice::checks pending or failed; the next finished run tries again"
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+
+      - name: Merge
+        if: steps.checks.outputs.ok == 'true'
+        run: gh pr merge "${{ steps.pr.outputs.number }}" --squash --delete-branch --match-head-commit "$SHA"

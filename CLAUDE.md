@@ -23,6 +23,10 @@ scripts/release.sh check vX.Y.Z      # tag, version files and CHANGELOG agree
   - nightly or manual: pushes `edge`
   - `v*` tag: pushes `<version>` (+ `latest` for final releases) and creates the GitHub release
   - pull request: builds and tests only
+- Dependabot (`.github/dependabot.yml`) updates uv, GitHub Actions and the Containerfile base image every week.
+  `dependabot-automerge.yml` squash-merges a PR when it only has semver-patch updates and every check on its
+  head commit has passed; minor and major updates stay open for review. The base image is pinned
+  (`python:3.12.N-slim`) so that Dependabot can see its patch releases.
 - The procedure is in `docs/RELEASING.md`. The version lives in `pyproject.toml` and `src/restfultts/__init__.py`
   (PEP 440, `X.Y.Z.dev0` between releases).
 

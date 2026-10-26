@@ -1,0 +1,41 @@
+# Patch updates of one ecosystem come as one grouped PR and are merged by dependabot-automerge.yml
+# once all checks pass; minor and major updates stay open for review.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    groups:
+      python-patch:
+        update-types: [patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-patch:
+        update-types: [patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "container"
+    ignore:
+      # Python stays on 3.12 (requires-python, and the kokoro/misaki forks cap it at <3.14)
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      docker-patch:
+        update-types: [patch]
