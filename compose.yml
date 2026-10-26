@@ -1,0 +1,16 @@
+services:
+  restfultts:
+    build: .
+    image: localhost/restfultts:latest
+    container_name: restfultts
+    ports:
+      - "8000:8000"
+    environment:
+      # - RESTFULTTS_API_TOKEN=change-me
+      - RESTFULTTS_PRELOAD=de,en,fr,it
+    volumes:
+      - restfultts_data:/data
+    restart: unless-stopped
+
+volumes:
+  restfultts_data:
