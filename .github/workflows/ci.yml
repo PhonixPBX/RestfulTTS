@@ -12,7 +12,7 @@ jobs:
   lint-test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.12.13"
@@ -29,7 +29,7 @@ jobs:
   shell:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: shellcheck
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
@@ -38,6 +38,6 @@ jobs:
   vendor:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: vendored front-end assets match vendor/VERSIONS
         run: cd src/restfultts/static/vendor && sed -n 's/^\([0-9a-f]\{64\}\)  /\1  /p' VERSIONS | sha256sum -c --quiet
