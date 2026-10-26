@@ -1,0 +1,185 @@
+name: container
+
+# OCI image ghcr.io/<owner>/restfultts (Containerfile) for linux/amd64 and linux/arm64.
+#   nightly (default branch):   edge, sha-<short>; only with new commits since the last nightly
+#   manual run:                 always builds; edge, sha-<short> on the default branch
+#   v* tag:                     <version> (v stripped), latest (not for pre-releases), and the GitHub release
+#   pull request:               amd64 build + smoke test, nothing is pushed
+on:
+  schedule:
+    - cron: "37 2 * * *"
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - "Containerfile"
+      - ".containerignore"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "src/**"
+      - "scripts/test-container.sh"
+      - ".github/workflows/container.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - name: New commits since the last nightly build
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WORKFLOW: container.yml
+        run: |
+          build=true
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            # last successful nightly, scheduled or started by hand
+            last=$(gh run list -w "$WORKFLOW" -s success -b "$GITHUB_REF_NAME" -L 50 --json headSha,event \
+              -q '[.[] | select(.event == "schedule" or .event == "workflow_dispatch")][0].headSha')
+            if [ "$last" = "$GITHUB_SHA" ]; then
+              build=false
+              echo "::notice::no commits since the last nightly build ($last)"
+            fi
+          fi
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+
+  image:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.kind.outputs.version }}
+      final: ${{ steps.kind.outputs.final }}
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: scripts/release.sh check "$GITHUB_REF_NAME"
+
+      # PEP 440 versions (1.2.0rc1) are no semver, so docker/metadata-action's type=semver does not
+      # tag them: the version comes from the tag, and only a final release (v1.2.0) gets "latest"
+      - name: Release kind
+        id: kind
+        run: |
+          version=""
+          final=false
+          case "$GITHUB_REF" in
+            refs/tags/v*)
+              version=${GITHUB_REF_NAME#v}
+              echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' && final=true
+              ;;
+          esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "final=$final" >> "$GITHUB_OUTPUT"
+
+      - name: Image name
+        id: image
+        # registry paths must be lower case
+        run: echo "name=ghcr.io/$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')/restfultts" >> "$GITHUB_OUTPUT"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          flavor: |
+            latest=false
+          tags: |
+            type=edge
+            type=sha,prefix=sha-,format=short,enable={{is_default_branch}}
+            type=raw,value=${{ steps.kind.outputs.version }},enable=${{ steps.kind.outputs.version != '' }}
+            type=raw,value=latest,enable=${{ steps.kind.outputs.final }}
+          labels: |
+            org.opencontainers.image.title=RestfulTTS
+            org.opencontainers.image.description=Kokoro text-to-speech over REST, MCP and a web UI for PhonixPBX
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build (linux/amd64) for the smoke test
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Containerfile
+          platforms: linux/amd64
+          load: true
+          tags: restfultts:test
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test (UI, REST, auth, MCP, German and English synthesis)
+        run: CONTAINER=docker scripts/test-container.sh restfultts:test
+
+      - name: Log in to ghcr.io
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (linux/amd64, linux/arm64) and push
+        if: github.event_name != 'pull_request' && steps.meta.outputs.tags != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Containerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # GitHub release for v* tags, after the image is pushed; notes are the CHANGELOG.md section
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release notes
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}
+          VERSION: ${{ needs.image.outputs.version }}
+        run: |
+          {
+            scripts/release.sh notes "$GITHUB_REF_NAME"
+            echo
+            echo "## Container image"
+            echo
+            echo '```sh'
+            echo "podman run -p 8000:8000 -v restfultts_data:/data $IMAGE:$VERSION"
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+      # v1.2.0 is a final release; v1.2.0rc1 and other PEP 440 suffixes are pre-releases, never "latest"
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: RestfulTTS ${{ needs.image.outputs.version }}
+          body_path: ${{ runner.temp }}/notes.md
+          prerelease: ${{ needs.image.outputs.final != 'true' }}
+          make_latest: ${{ needs.image.outputs.final == 'true' && 'true' || 'false' }}
