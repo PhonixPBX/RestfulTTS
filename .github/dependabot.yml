@@ -34,7 +34,7 @@ updates:
       prefix: "container"
     ignore:
       # Python stays on 3.12 (requires-python, and the kokoro/misaki forks cap it at <3.14)
-      - dependency-name: "python"
+      - dependency-name: "library/python"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       docker-patch:
