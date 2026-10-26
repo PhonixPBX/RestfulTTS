@@ -1,0 +1,5 @@
+<select class="form-select" id="voice" name="voice">
+  {% for v in voices %}
+  <option value="{{ v.id }}" title="Kokoro-Qualität {{ v.quality }}"{% if v.id == selected_voice %} selected{% endif %}>{{ v.label }}{% if v.quality in ("C", "C+", "C-", "D") %} · {{ v.quality }}{% endif %}</option>
+  {% endfor %}
+</select>

@@ -1,0 +1,18 @@
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center mb-2">
+      <h3 class="card-title mb-0">{{ result.voice.label }} <span class="badge bg-secondary-lt ms-1">{{ result.voice.language }}</span></h3>
+      <span class="ms-auto text-secondary small">
+        {% if result.entry.meta.duration %}{{ "%.1f"|format(result.entry.meta.duration) }} s · {% endif %}
+        {{ "aus dem Cache" if result.cache_hit else "neu erzeugt" }}
+      </span>
+    </div>
+    <audio class="w-100" controls autoplay src="{{ preview.url }}"></audio>
+  </div>
+  <div class="card-footer d-flex gap-2">
+    <a class="btn btn-outline-primary text-nowrap flex-shrink-0" href="{{ result.url }}" download="{{ result.filename }}">
+      <i class="ti ti-download me-1" aria-hidden="true"></i>{{ result.format.name }} herunterladen
+    </a>
+    <input class="form-control font-monospace" type="text" readonly value="{{ result.url }}" aria-label="URL" data-select-on-focus>
+  </div>
+</div>

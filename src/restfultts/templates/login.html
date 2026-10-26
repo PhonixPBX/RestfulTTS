@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}Anmelden – RestfulTTS{% endblock %}
+{% block content %}
+<div class="page-body">
+  <div class="container-tight py-4">
+    <form class="card card-md" method="post" action="/login">
+      <div class="card-body">
+        <h2 class="h2 text-center mb-4">Anmelden</h2>
+        {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+        <div class="mb-3">
+          <label class="form-label" for="token">API-Token</label>
+          <input class="form-control" type="password" id="token" name="token" autocomplete="current-password" required autofocus>
+          <div class="form-hint">Der Wert von <code>RESTFULTTS_API_TOKEN</code>.</div>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Anmelden</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

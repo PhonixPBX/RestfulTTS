@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="page-pretitle">Kokoro-82M · Thorsten-Voice</div>
+    <h1 class="page-title">Text in Sprache</h1>
+  </div>
+</div>
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row row-cards">
+      <div class="col-lg-8">
+        <form class="card" hx-post="/ui/synthesize" hx-target="#result" hx-indicator="#synth-spinner" hx-disable="#synth-button">
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label required" for="text">Text</label>
+              <textarea class="form-control" id="text" name="text" rows="6" maxlength="{{ max_text_chars }}" required
+                        placeholder="Guten Tag und willkommen. Für den Verkauf drücken Sie die Eins."></textarea>
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6 col-md-3">
+                <label class="form-label" for="language">Sprache</label>
+                <select class="form-select" id="language" name="language"
+                        hx-get="/ui/voices" hx-trigger="change" hx-target="#voice" hx-swap="outerHTML">
+                  {% for code, name in languages.items() %}
+                  <option value="{{ code }}"{% if code == language %} selected{% endif %}>{{ name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-3">
+                <label class="form-label" for="voice">Stimme</label>
+                {% include "partials/voices_select.html" %}
+              </div>
+              <div class="col-sm-6 col-md-3">
+                <label class="form-label" for="speed">Tempo <span class="text-secondary" id="speed-value">1.0×</span></label>
+                <input class="form-range mt-2" type="range" id="speed" name="speed" min="{{ min_speed }}" max="{{ max_speed }}"
+                       step="0.05" value="1.0" data-output="#speed-value">
+              </div>
+              <div class="col-sm-6 col-md-3">
+                <label class="form-label" for="format">Format</label>
+                <select class="form-select" id="format" name="format">
+                  {% for f in formats %}
+                  <option value="{{ f.name }}" title="{{ f.description }}">{{ f.name }} – {{ f.rate // 1000 }} kHz</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer d-flex align-items-center">
+            <span class="text-secondary small">Telefonie: <code>wav8</code>, <code>sln</code>, <code>ulaw</code>, <code>alaw</code> (8 kHz)</span>
+            <button class="btn btn-primary ms-auto" id="synth-button" type="submit">
+              <span class="spinner-border spinner-border-sm me-2 htmx-indicator" id="synth-spinner" role="status" aria-hidden="true"></span>
+              <i class="ti ti-player-play me-1" aria-hidden="true"></i>Erzeugen
+            </button>
+          </div>
+        </form>
+        <div id="result" class="mt-3" aria-live="polite"></div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Verlauf</h3></div>
+          <div id="history" hx-get="/ui/history" hx-trigger="history-changed from:body">
+            {% include "partials/history.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
