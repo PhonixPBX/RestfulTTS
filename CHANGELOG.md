@@ -4,7 +4,7 @@ All notable changes to RestfulTTS are documented in this file. The format follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - 2026-10-26
 
 ### Added
 
@@ -20,3 +20,5 @@ All notable changes to RestfulTTS are documented in this file. The format follow
   `127.0.0.1` are accepted by default, against DNS rebinding.
 - File cache keyed by text, voice, speed and format. Entries can be deleted with the trash button in the history,
   `DELETE /api/v1/audio/<hash>` or the MCP tool `delete_audio`; this removes all formats of that synthesis.
+
+[0.1.0]: https://github.com/PhonixPBX/RestfulTTS/releases/tag/v0.1.0
