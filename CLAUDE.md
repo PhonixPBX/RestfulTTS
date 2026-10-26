@@ -24,9 +24,12 @@ scripts/release.sh check vX.Y.Z      # tag, version files and CHANGELOG agree
   - `v*` tag: pushes `<version>` (+ `latest` for final releases) and creates the GitHub release
   - pull request: builds and tests only
 - Dependabot (`.github/dependabot.yml`) updates uv, GitHub Actions and the Containerfile base image every week.
-  `dependabot-automerge.yml` squash-merges a PR when it only has semver-patch updates and every check on its
-  head commit has passed; minor and major updates stay open for review. The base image is pinned
-  (`python:3.12.N-slim`) so that Dependabot can see its patch releases.
+  `dependabot-automerge.yml` turns on GitHub's auto-merge (squash) for PRs with only semver-patch updates; minor
+  and major updates stay open for review. The base image is pinned (`python:3.12.N-slim`) so that Dependabot can
+  see its patch releases.
+- The `main` ruleset requires the checks `lint-test`, `shell`, `vendor` (ci) and `image` (container) for PRs;
+  repository admins may bypass it and push directly. A required check must run on every PR, so these workflows
+  have no `paths` filter.
 - The procedure is in `docs/RELEASING.md`. The version lives in `pyproject.toml` and `src/restfultts/__init__.py`
   (PEP 440, `X.Y.Z.dev0` between releases).
 

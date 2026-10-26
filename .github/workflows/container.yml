@@ -4,21 +4,14 @@ name: container
 #   nightly (default branch):   edge, sha-<short>; only with new commits since the last nightly
 #   manual run:                 always builds; edge, sha-<short> on the default branch
 #   v* tag:                     <version> (v stripped), latest (not for pre-releases), and the GitHub release
-#   pull request:               amd64 build + smoke test, nothing is pushed
+#   pull request:               amd64 build + smoke test, nothing is pushed; every PR, because the "image"
+#                               job is a required check of the main ruleset (a filtered-out check never passes)
 on:
   schedule:
     - cron: "37 2 * * *"
   push:
     tags: ["v*"]
   pull_request:
-    paths:
-      - "Containerfile"
-      - ".containerignore"
-      - "pyproject.toml"
-      - "uv.lock"
-      - "src/**"
-      - "scripts/test-container.sh"
-      - ".github/workflows/container.yml"
   workflow_dispatch:
 
 permissions:
