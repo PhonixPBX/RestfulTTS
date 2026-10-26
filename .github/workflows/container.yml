@@ -112,7 +112,7 @@ jobs:
             org.opencontainers.image.title=RestfulTTS
             org.opencontainers.image.description=Kokoro text-to-speech over REST, MCP and a web UI for PhonixPBX
 
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
       - uses: docker/setup-buildx-action@v3
