@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Dependabot metadata
         id: meta
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@v3
 
       # for grouped PRs update-type is the highest change of all dependencies in it
       - name: Enable auto-merge for patch updates
